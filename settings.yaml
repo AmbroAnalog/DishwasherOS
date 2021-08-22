@@ -1,0 +1,36 @@
+dishwasher:
+  manufacturer: Miele
+  model: G 470
+  hardware:
+    outputs:
+      relayPinMain: 11
+      relayPinLED: 9
+      relayPinP9: 10
+      relayPinP7: 22
+      relayPinP6: 27
+      relayPinP4: 17
+      relayPinMotor: 26
+      relayPinSummer: 19
+    inputs:
+      sensorPinP4: 15
+      sensorPinP6: 18
+      sensorPinP7: 23
+      sensorPinP9: 24
+      sensorPinP10: 25
+      sensorPinP11: 8
+      sensorPinP12: 7
+      sensorPinMotor: 14
+      sensorPinUmwelz: 16
+      sensorPinEinlauf: 20
+      sensorPinAblauf: 21
+      sensorPinHeizen: 5
+    addresses:
+      sesorTemp: 28-0000058f94d2
+  software:
+    loopSleepTime: 1
+    backendBaseUrl: 'http://mielesmart.de/back'
+    programTargetTemps:
+      targetTemp66: 56
+      targetTemp56: 47
+      targetTemp45: 35
+      tempGrowthSpeed: 0.043 #Grad Celsius pro Sekunde
