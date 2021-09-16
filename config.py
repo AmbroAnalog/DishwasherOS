@@ -59,6 +59,10 @@ class SoftwareConfig(Config):
         return self._swconfig.get('backendBaseUrl')
 
     @property
+    def logging_directory(self):
+        return self._swconfig.get('loggingDirectory')
+
+    @property
     def temp_growth_speed(self):
         return self._swconfig.get('programTargetTemps').get('tempGrowthSpeed')
 

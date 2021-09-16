@@ -1,5 +1,7 @@
 from config import HardwareConfig
 import RPi.GPIO as GPIO
+import time
+import logging
 
 
 class Dishwasher:
@@ -12,6 +14,10 @@ class Dishwasher:
     def __init__(self):
         # configuration
         self.hwconfig = HardwareConfig()
+        self.module_logger = logging.getLogger('DishwasherOS.HAL')
+
+        self.in_wash_program = False
+        self.step_transition_triggered = False
 
     def init_gpios(self):
         """initialize all GPIO inputs and outputs"""
@@ -24,6 +30,17 @@ class Dishwasher:
         # initialize hardware inputs
         for pin in self.hwconfig.input_pins.values():
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+        # create interrupt event handler
+        GPIO.add_event_handler(self.hwconfig.get_input_pin('sensorPinMotor'),
+                               GPIO.FALLING, callback=self.step_transition_triggered, bouncetime=25)
+
+    def step_transition_detected(self, channel):
+        if self.in_wash_program:
+            self.module_logger.debug('step transition detected')
+            self.step_transition_triggered = True
+        else:
+            self.module_logger.debug('step transition outside of program run detected')
 
     def read_program_sensor_values(self) -> dict[str, bool]:
         """return all GPIO Inputs for program selection detection"""
@@ -67,3 +84,19 @@ class Dishwasher:
         GPIO.output(self.hwconfig.get_output_pin('relayPinP7'), mode)
         GPIO.output(self.hwconfig.get_output_pin('relayPinP6'), mode)
         GPIO.output(self.hwconfig.get_output_pin('relayPinP4'), mode)
+
+    def set_buzzer(self, passes: int):
+        pin_name = self.hwconfig.get_output_pin('relayPinSummer')
+        for i in range(0, passes):
+            GPIO.output(pin_name, GPIO.LOW)
+            time.sleep(0.5)
+            GPIO.output(pin_name, GPIO.HIGH)
+            time.sleep(1)
+
+    def set_led(self, enable: bool):
+        mode = GPIO.HIGH if enable is True else GPIO.LOW
+        GPIO.output(self.hwconfig.get_output_pin('relayPinLED'), mode)
+
+    def set_main_relay(self, enable: bool):
+        mode = GPIO.LOW if enable is True else GPIO.HIGH
+        GPIO.output(self.hwconfig.get_output_pin('relayPinMain'), mode)

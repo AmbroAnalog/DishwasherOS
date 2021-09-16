@@ -1,5 +1,5 @@
 import time
-
+import logging
 from config import SoftwareConfig
 from dishwasher import Dishwasher
 
@@ -14,6 +14,7 @@ class WashingProgram:
 
     def __init__(self, machine: Dishwasher):
         self.machine = machine
+        self.module_logger = logging.getLogger('DishwasherOS.SAL')
 
         # process associated variables
         self.selected_program = 1
@@ -22,10 +23,15 @@ class WashingProgram:
         self.time_step_operational_start = time.time()
         self.thermostop_starttemp = 0
 
+        # run statistics
+        self.time_start = None
+        self.time_end = None
+
         # configuration
         self.swconfig = SoftwareConfig()
 
     def get_program_name(self):
+        """get program name by program number"""
         program_map = {
             1: "VDE - 0",
             2: "Stop - Start",
@@ -97,6 +103,7 @@ class WashingProgram:
         return sequence_map.get(self.step_sequence, 0)
 
     def get_sequence_name(self):
+        """get sequence name by program number"""
         sequence_map = {
             0: "Stop - Start",
             1: "1. Vorspülen",
@@ -110,6 +117,7 @@ class WashingProgram:
         return sequence_map.get(self.step_sequence, "Invalid")
 
     def get_target_temp(self, step_id=0):
+        """return the target temperature of a given step"""
         if step_id == 0:
             var = self.step_operational
         else:
@@ -145,6 +153,7 @@ class WashingProgram:
             return False
 
     def get_operational_time(self, step_id=0):
+        """get execution time of one given step in minutes"""
         operational_map = {
             1: 0.5,
             2: 0.5,
@@ -212,77 +221,80 @@ class WashingProgram:
             return operational_map.get(step_id, 0)
 
     def check_program_sync(self):
-        newstep_operational = 0
+        new_step_operational = 0
         valve_outlet = self.machine.read_input('sensorPinAblauf')
         if valve_outlet:
             if 16 <= self.step_operational <= 19:
-                newstep_operational = 15
+                new_step_operational = 15
             if 20 <= self.step_operational <= 23:
-                newstep_operational = 24
+                new_step_operational = 24
             if 26 <= self.step_operational <= 29:
-                newstep_operational = 25
+                new_step_operational = 25
             if 30 <= self.step_operational <= 33:
-                newstep_operational = 34
+                new_step_operational = 34
             if 36 <= self.step_operational <= 40:
-                newstep_operational = 35
+                new_step_operational = 35
             if 41 <= self.step_operational <= 43:
-                newstep_operational = 44
+                new_step_operational = 44
             if 52 <= self.step_operational <= 55:
-                newstep_operational = 56
-        if newstep_operational != 0:
-            # TODO rework print statement
-            print("DESYNC!!! oldStep: " + str(self.step_operational) + "  newStep: " + str(newstep_operational) + ".")
-            print("status: " + str(valve_outlet))
-            self.set_new_operational_step(newstep_operational)
+                new_step_operational = 56
+        if new_step_operational != 0:
+            self.module_logger.warning('incorrectly synchronized program step detected!')
+            self.module_logger.warning('step correction initiated. old step {}, new step {} ({})'.format(
+                self.step_operational, new_step_operational, valve_outlet
+            ))
+            self.set_new_operational_step(new_step_operational)
 
     def get_next_step_operational(self, get_next_step=False, step_id=0):
+        """returns the next step depending on the selected program"""
         if step_id == 0:
             step = self.step_operational
         else:
             step = step_id
-        newstep_operational = 0
+        new_step_operational = 0
         if self.selected_program in [4, 5]:
             if step == 6:
-                newstep_operational = 8
+                new_step_operational = 8
         if self.selected_program in [6, 7, 11, 12]:
             if 2 <= step <= 8:
                 if not get_next_step:
                     self.step_sequence = 2
-                newstep_operational = 9
+                new_step_operational = 9
         if self.selected_program in [8, 9, 10]:
             if 2 <= step <= 14:
                 if not get_next_step:
                     self.step_sequence = 3
-                newstep_operational = 15
+                new_step_operational = 15
         if self.selected_program == 10:
             if step == 19:
-                newstep_operational = 24
+                new_step_operational = 24
             if step == 28:
-                newstep_operational = 34
+                new_step_operational = 34
             if step == 40:
-                newstep_operational = 44
+                new_step_operational = 44
             if step == 47:
-                newstep_operational = 56
+                new_step_operational = 56
         if self.selected_program == 12:
             if 14 <= step <= 55:
-                newstep_operational = 56
+                new_step_operational = 56
                 if not get_next_step:
                     self.step_sequence = 6
             if 56 <= step <= 59:
-                newstep_operational = 60
+                new_step_operational = 60
                 if not get_next_step:
                     self.step_sequence = 7
         if get_next_step:
-            if newstep_operational == 0:
+            if new_step_operational == 0:
                 return step + 1
             else:
-                return newstep_operational
-        if newstep_operational == 0:
+                return new_step_operational
+        if new_step_operational == 0:
             self.set_new_operational_step(step + 1)
         else:
-            self.set_new_operational_step(newstep_operational)
+            self.set_new_operational_step(new_step_operational)
 
     def get_time_left_operationalstep(self):
+        """get time left of the current operational step in seconds"""
         time_now = time.time()
         time_run = time_now - self.time_step_operational_start
         if self.is_thermo_stop():
@@ -298,6 +310,7 @@ class WashingProgram:
         return int(time_left)
 
     def get_time_left_sequence_step(self):
+        """get time left of the current sequence in seconds"""
         step_last = self.get_last_sequence_step()
         time_left = self.get_time_left_operationalstep()
         if self.step_operational != step_last:
@@ -306,6 +319,7 @@ class WashingProgram:
         return time_left
 
     def get_time_left_program(self):
+        """get time left of the complete program in seconds"""
         time_left = self.get_time_left_operationalstep()
         if self.step_operational < 57:
             i = self.get_next_step_operational(True, self.step_operational)
@@ -313,6 +327,7 @@ class WashingProgram:
         return time_left
 
     def get_runtime_for_steps(self, step_start, step_end):
+        """get the runtime in a given step range in seconds"""
         i = step_start
         time_left = 0
         while i < step_end:
@@ -333,6 +348,10 @@ class WashingProgram:
             i = self.get_next_step_operational(True, i)
         return time_left
 
+    def get_current_runtime(self):
+        """return the runtime of the current program in seconds"""
+        return int(round(time.time() - self.time_start))
+
     def set_new_operational_step(self, step_new):
         self.step_operational = step_new
         self.time_step_operational_start = time.time()
@@ -342,6 +361,9 @@ class WashingProgram:
             self.step_sequence += 1
         if self.is_thermo_stop():
             self.thermostop_starttemp = self.machine.read_temperature()
+        # check if main program has ended
+        if self.step_operational > 56:
+            self.finish_program()
 
     def find_selected_program(self):
         """find the selected program by toggle relays and read sensor response"""
@@ -349,3 +371,17 @@ class WashingProgram:
         time.sleep(0.5)
         self.selected_program = self.__scan_selected_program()
         self.machine.set_all_relays(False)
+
+    def start_program(self):
+        """start the selected program and toggle main relay"""
+        self.machine.set_led(True)
+        self.machine.set_buzzer(2)
+        self.machine.set_main_relay(True)
+        self.machine.in_wash_program = True
+        # start timer
+        self.time_start = time.time()
+
+    def finish_program(self):
+        """end the selected program because step 56 was crossed"""
+        self.machine.in_wash_program = False
+        self.time_end = time.time()

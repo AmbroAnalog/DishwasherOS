@@ -29,6 +29,7 @@ dishwasher:
   software:
     loopSleepTime: 1
     backendBaseUrl: 'http://mielesmart.de/back'
+    loggingDirectory: /home/pi/MieleGSmart/Firmware/logs/
     programTargetTemps:
       targetTemp66: 56
       targetTemp56: 47
