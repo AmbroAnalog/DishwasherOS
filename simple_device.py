@@ -1,4 +1,4 @@
-from my_states import LockedState
+from my_states import LockedStatelogging
 
 
 class SimpleDevice(object):

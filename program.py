@@ -350,7 +350,7 @@ class WashingProgram:
 
     def get_current_runtime(self):
         """return the runtime of the current program in seconds"""
-        return int(round(time.time() - self.time_start))
+        return int(round(time.time() - self.time_start)) if self.time_start is not None else 0
 
     def set_new_operational_step(self, step_new):
         self.step_operational = step_new
