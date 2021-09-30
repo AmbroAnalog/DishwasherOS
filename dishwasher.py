@@ -32,8 +32,9 @@ class Dishwasher:
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
         # create interrupt event handler
-        GPIO.add_event_handler(self.hwconfig.get_input_pin('sensorPinMotor'),
-                               GPIO.FALLING, callback=self.step_transition_triggered, bouncetime=25)
+        GPIO.add_event_detect(self.hwconfig.get_input_pin('sensorPinMotor'), GPIO.FALLING)
+        GPIO.add_event_callback(self.hwconfig.get_input_pin('sensorPinMotor'),
+                                self.step_transition_detected)
 
     def step_transition_detected(self, channel):
         if self.in_wash_program:

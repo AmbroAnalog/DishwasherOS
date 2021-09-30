@@ -1,9 +1,10 @@
-
+import sys
 import time
 
 import logger
 from dishwasher import Dishwasher
 from program import WashingProgram
+from process_data import ProcessDataProvider
 import logging
 
 logger.setup_logger()
@@ -15,8 +16,11 @@ module_logger.info('load main module')
 dishwasher = Dishwasher()
 dishwasher.init_gpios()
 program = WashingProgram(dishwasher)
-data_provider = logger.ProcessDataProvider(program)
+data_provider = ProcessDataProvider(program)
 
+dishwasher.set_buzzer(1)
+print("EXIT")
+sys.exit()
 
 # get selected program
 dishwasher.set_buzzer(1)

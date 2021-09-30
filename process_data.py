@@ -25,7 +25,7 @@ class ProcessDataProvider:
         self.swconfig = program.swconfig
         self.module_logger = logging.getLogger('DishwasherOS.ProcessData')
 
-        self.timer = SendProcessDataRepeatedTimer(self.swconfig.sendProcessDataRepeatedTimerInterval, self.collect_process_data)
+        # self.timer = SendProcessDataRepeatedTimer(self.swconfig.data_repeated_timer_interval, self.collect_process_data)
 
     def collect_process_data(self):
         """thread function to collect & transfer process data"""
