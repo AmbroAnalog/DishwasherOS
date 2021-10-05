@@ -18,14 +18,9 @@ dishwasher.init_gpios()
 program = WashingProgram(dishwasher)
 data_provider = ProcessDataProvider(program)
 
-dishwasher.set_buzzer(1)
-print("EXIT")
-sys.exit()
-
 # get selected program
 dishwasher.set_buzzer(1)
 program.find_selected_program()
-
 
 while program.selected_program == 2:
     module_logger.info('no program selected by user... waiting and try again after 30 sec.')

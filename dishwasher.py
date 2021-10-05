@@ -37,10 +37,10 @@ class Dishwasher:
                                 self.step_transition_detected)
 
     def step_transition_detected(self, channel):
-        if self.in_wash_program:
+        if self.in_wash_program and not self.step_transition_triggered:
             self.module_logger.debug('step transition detected')
             self.step_transition_triggered = True
-        else:
+        elif not self.in_wash_program:
             self.module_logger.debug('step transition outside of program run detected')
 
     def read_program_sensor_values(self) -> dict[str, bool]:

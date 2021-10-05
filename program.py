@@ -338,7 +338,7 @@ class WashingProgram:
                     temp_start = 35
                 else:
                     temp_start = 17
-                temp_target_sensor = self.swconfig.get_program_target_temps(self.get_target_temp())
+                temp_target_sensor = self.swconfig.get_program_target_temps(self.get_target_temp(i))
 
                 gradient = self.swconfig.temp_growth_speed
                 time_head = (temp_target_sensor - temp_start) / gradient

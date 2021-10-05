@@ -3,26 +3,26 @@ dishwasher:
   model: G 470
   hardware:
     outputs:
-      relayPinMain: 11
-      relayPinLED: 9
-      relayPinP9: 10
-      relayPinP7: 22
-      relayPinP6: 27
-      relayPinP4: 17
-      relayPinMotor: 26
-      relayPinSummer: 19
+      relayPinMain: 17
+      relayPinLED: 27
+      relayPinP9: 22
+      relayPinP7: 10
+      relayPinP6: 9
+      relayPinP4: 11
+      relayPinMotor: 19
+      relayPinSummer: 26
     inputs:
-      sensorPinP4: 15
-      sensorPinP6: 18
-      sensorPinP7: 23
-      sensorPinP9: 24
-      sensorPinP10: 25
-      sensorPinP11: 8
-      sensorPinP12: 7
-      sensorPinMotor: 14
-      sensorPinUmwelz: 16
-      sensorPinEinlauf: 20
-      sensorPinAblauf: 21
+      sensorPinP4: 23
+      sensorPinP6: 24
+      sensorPinP7: 25
+      sensorPinP9: 8
+      sensorPinP10: 7
+      sensorPinP11: 12
+      sensorPinP12: 16
+      sensorPinMotor: 18
+      sensorPinUmwelz: 21
+      sensorPinEinlauf: 13
+      sensorPinAblauf: 6
       sensorPinHeizen: 5
     addresses:
       sesorTemp: 28-0000058f94d2

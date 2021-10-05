@@ -81,7 +81,7 @@ class ProcessDataProvider:
         with open(logger_file_path, 'a') as fd:
             timestamp = time.strftime('%H:%M:%S')
             runtime = self.program.get_current_runtime()
-            fd.write('{time};{runtime};{termostop};{step};{temp}'.format(
+            fd.write('{time};{runtime};{termostop};{step};{temp}\n'.format(
                 time=timestamp, runtime=runtime, termostop=self.program.is_thermo_stop(),
                 step=self.program.step_operational, temp=self.program.machine.read_temperature()))
 
