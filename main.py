@@ -1,6 +1,6 @@
 import sys
 import time
-
+import os
 import logger
 from dishwasher import Dishwasher
 from program import WashingProgram
@@ -28,7 +28,7 @@ while program.selected_program == 2:
     program.find_selected_program()
 
 module_logger.info("start with washing program '{}' (nr {})".format(program.get_program_name(), program.selected_program))
-module_logger.info("estimated program duration: {} min".format(int(program.get_time_left_program()/60)))
+module_logger.info("estimated program duration: {} min".format(int(program.estimated_runtime/60)))
 
 # start the dishwasher intern program
 program.start_program()
@@ -54,7 +54,7 @@ while dishwasher.in_wash_program:
             if old_step_operational in [7, 19, 38, 40]:
                 # TODO log heating step here
                 pass
-            module_logger.debug('step {} took {}s'.format(old_step_operational, time_left_step))
+            module_logger.debug('step {} with overshoot of {}s'.format(old_step_operational, time_left_step))
             program.get_next_step_operational()
         step_transition += 1
     elif program.step_operational >= 56 and time_left_step < 0:
@@ -71,12 +71,30 @@ while dishwasher.in_wash_program:
 
     if program.step_operational != old_step_operational:
         # the program has gone one step forward
-        module_logger.debug('begin new step {}'.format(program.step_operational))
+        module_logger.debug('begin new step {} with runtime {}s'.format(program.step_operational,
+                                                                        program.get_time_left_operationalstep()))
 
     # TODO do a post request to web provider in the ProcessDataProvider class
 
     running_loop_counter += 1
     time.sleep(1)
 
-# TODO all post program steps
-pass
+delta_prediction = int(program.get_current_runtime() - program.estimated_runtime)
+module_logger.info('program end reached after {} minutes'.format(int(program.get_current_runtime() / 60)))
+module_logger.info('difference from the prediction of {} seconds'.format(delta_prediction))
+
+data_provider.write_csv_program_completion_record()
+
+dishwasher.set_buzzer(4)
+module_logger.info('wait for 0-position...')
+# the input pin 'heating' is used as a trigger for the 0-position
+while not dishwasher.read_input('sensorPinHeizen'):
+    time.sleep(0.2)
+
+dishwasher.set_led(True)
+dishwasher.set_buzzer(1)
+module_logger.info('program has finished successfully')
+dishwasher.dispose_gpios()
+
+# shutdown the raspberry pi
+os.system("sudo shutdown -h now")

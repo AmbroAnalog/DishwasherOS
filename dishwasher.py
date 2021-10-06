@@ -32,9 +32,17 @@ class Dishwasher:
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
         # create interrupt event handler
-        GPIO.add_event_detect(self.hwconfig.get_input_pin('sensorPinMotor'), GPIO.FALLING)
+        GPIO.add_event_detect(self.hwconfig.get_input_pin('sensorPinMotor'), GPIO.RISING,
+                              bouncetime=50)
         GPIO.add_event_callback(self.hwconfig.get_input_pin('sensorPinMotor'),
                                 self.step_transition_detected)
+
+    def dispose_gpios(self):
+        """cleanup GPIO pins after the program has finished."""
+        if self.in_wash_program:
+            self.module_logger.warning('GPIO cleanup in active program run called, aborting!')
+        else:
+            GPIO.cleanup()
 
     def step_transition_detected(self, channel):
         if self.in_wash_program and not self.step_transition_triggered:

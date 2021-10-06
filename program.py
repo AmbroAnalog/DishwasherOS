@@ -26,6 +26,7 @@ class WashingProgram:
         # run statistics
         self.time_start = None
         self.time_end = None
+        self.estimated_runtime = 0
 
         # configuration
         self.swconfig = SoftwareConfig()
@@ -295,6 +296,8 @@ class WashingProgram:
 
     def get_time_left_operationalstep(self):
         """get time left of the current operational step in seconds"""
+        if self.selected_program in (1, 2) or self.time_start is None:
+            return 0
         time_now = time.time()
         time_run = time_now - self.time_step_operational_start
         if self.is_thermo_stop():
@@ -311,6 +314,8 @@ class WashingProgram:
 
     def get_time_left_sequence_step(self):
         """get time left of the current sequence in seconds"""
+        if self.selected_program in (1, 2) or self.time_start is None:
+            return 0
         step_last = self.get_last_sequence_step()
         time_left = self.get_time_left_operationalstep()
         if self.step_operational != step_last:
@@ -320,6 +325,8 @@ class WashingProgram:
 
     def get_time_left_program(self):
         """get time left of the complete program in seconds"""
+        if self.selected_program in (1, 2):
+            return 0
         time_left = self.get_time_left_operationalstep()
         if self.step_operational < 57:
             i = self.get_next_step_operational(True, self.step_operational)
@@ -339,6 +346,7 @@ class WashingProgram:
                 else:
                     temp_start = 17
                 temp_target_sensor = self.swconfig.get_program_target_temps(self.get_target_temp(i))
+                test = self.get_target_temp(i)
 
                 gradient = self.swconfig.temp_growth_speed
                 time_head = (temp_target_sensor - temp_start) / gradient
@@ -350,7 +358,13 @@ class WashingProgram:
 
     def get_current_runtime(self):
         """return the runtime of the current program in seconds"""
-        return int(round(time.time() - self.time_start)) if self.time_start is not None else 0
+        if self.time_start is None:
+            runtime = 0
+        elif self.time_end is not None:
+            runtime = round(time.time() - self.time_start)
+        else:
+            runtime = round(self.time_end - self.time_start)
+        return int(runtime)
 
     def set_new_operational_step(self, step_new):
         self.step_operational = step_new
@@ -371,6 +385,9 @@ class WashingProgram:
         time.sleep(0.5)
         self.selected_program = self.__scan_selected_program()
         self.machine.set_all_relays(False)
+        # save estimated program runtime
+        if self.selected_program != 1 and self.selected_program != 2:
+            self.estimated_runtime = self.get_time_left_program()
 
     def start_program(self):
         """start the selected program and toggle main relay"""
@@ -384,4 +401,5 @@ class WashingProgram:
     def finish_program(self):
         """end the selected program because step 56 was crossed"""
         self.machine.in_wash_program = False
+        self.machine.set_led(False)
         self.time_end = time.time()

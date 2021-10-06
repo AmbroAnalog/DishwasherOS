@@ -25,13 +25,16 @@ class ProcessDataProvider:
         self.swconfig = program.swconfig
         self.module_logger = logging.getLogger('DishwasherOS.ProcessData')
 
-        # self.timer = SendProcessDataRepeatedTimer(self.swconfig.data_repeated_timer_interval, self.collect_process_data)
+        self.timer = SendProcessDataRepeatedTimer(self.swconfig.data_repeated_timer_interval, self.collect_process_data)
 
     def collect_process_data(self):
         """thread function to collect & transfer process data"""
         runtime = self.program.get_current_runtime()
         time_left = self.program.get_time_left_program()
-        progress_percent = int((runtime / time_left + runtime) * 100)
+        if time_left + runtime == 0:
+            progress_percent = 0
+        else:
+            progress_percent = int((runtime / time_left + runtime) * 100)
         process_data = {
             'session_id': self.session_id,
             'program_runtime': runtime,
@@ -39,6 +42,7 @@ class ProcessDataProvider:
             'program_step_operational': self.program.step_operational,
             'program_step_sequence': self.program.step_sequence,
             'program_selected_id': self.program.selected_program,
+            'program_time_start': self.program.time_start,
             'program_time_left_step': self.program.get_time_left_operationalstep(),
             'program_time_left_sequence': self.program.get_time_left_sequence_step(),
             'program_time_left_program': time_left,
@@ -84,6 +88,14 @@ class ProcessDataProvider:
             fd.write('{time};{runtime};{termostop};{step};{temp}\n'.format(
                 time=timestamp, runtime=runtime, termostop=self.program.is_thermo_stop(),
                 step=self.program.step_operational, temp=self.program.machine.read_temperature()))
+
+    def write_csv_program_completion_record(self):
+        record_file_path = os.path.join(self.swconfig.logging_directory, 'RunningLog.csv')
+        self.module_logger.debug('write {}'.format(record_file_path))
+        with open(record_file_path, 'a') as fd:
+            fd.write('{start_time};{program};{duration_est};{duration_real}\n'.format(
+                start_time=self.program.time_start, program=self.program.selected_program,
+                duration_est=self.program.estimated_runtime, duration_real=self.program.get_current_runtime()))
 
 
 class SendProcessDataRepeatedTimer(object):
