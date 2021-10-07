@@ -55,6 +55,8 @@ while dishwasher.in_wash_program:
                 # TODO log heating step here
                 pass
             module_logger.debug('step {} with overshoot of {}s'.format(old_step_operational, time_left_step))
+            if abs(time_left_step) > 10:
+                module_logger.warning('unusually large runtime deviation detected!')
             program.get_next_step_operational()
         step_transition += 1
     elif program.step_operational >= 56 and time_left_step < 0:
@@ -73,6 +75,8 @@ while dishwasher.in_wash_program:
         # the program has gone one step forward
         module_logger.debug('begin new step {} with runtime {}s'.format(program.step_operational,
                                                                         program.get_time_left_operationalstep()))
+        if program.is_thermo_stop():
+            module_logger.debug('in a heating phase to {} °C'.format(program.get_target_temp()))
 
     # TODO do a post request to web provider in the ProcessDataProvider class
 

@@ -118,7 +118,7 @@ class WashingProgram:
         return sequence_map.get(self.step_sequence, "Invalid")
 
     def get_target_temp(self, step_id=0):
-        """return the target temperature of a given step"""
+        """return the target temperature in degrees celsius of a given step"""
         if step_id == 0:
             var = self.step_operational
         else:
@@ -360,7 +360,7 @@ class WashingProgram:
         """return the runtime of the current program in seconds"""
         if self.time_start is None:
             runtime = 0
-        elif self.time_end is not None:
+        elif self.time_end is None:
             runtime = round(time.time() - self.time_start)
         else:
             runtime = round(self.time_end - self.time_start)

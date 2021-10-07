@@ -34,11 +34,11 @@ class ProcessDataProvider:
         if time_left + runtime == 0:
             progress_percent = 0
         else:
-            progress_percent = int((runtime / time_left + runtime) * 100)
+            progress_percent = int((runtime / (time_left + runtime)) * 100)
         process_data = {
             'session_id': self.session_id,
             'program_runtime': runtime,
-            'program_progress_percent:': progress_percent,
+            'program_progress_percent': progress_percent,
             'program_step_operational': self.program.step_operational,
             'program_step_sequence': self.program.step_sequence,
             'program_selected_id': self.program.selected_program,
@@ -72,7 +72,7 @@ class ProcessDataProvider:
         serial_communicator.flush()
         try:
             serial_communicator.write(serial_data.encode('utf-8'))
-            self.module_logger.debug('send data to ttySO: ' + serial_data)
+            # self.module_logger.debug('send data to ttySO: ' + serial_data)
         except Exception as e:
             # or maybe serial.SerialException
             self.module_logger.error(traceback.format_exc())
