@@ -1,4 +1,3 @@
-import sys
 import time
 import os
 import logger
@@ -9,9 +8,12 @@ import logging
 
 logger.setup_logger()
 module_logger = logging.getLogger('DishwasherOS.main')
-
 module_logger.info('load main module')
 
+# get environment variable to check if the program run remotely by PyCharm
+IN_DEVELOPMENT_RUN = False if os.getenv('IN_DEV_MODE') is None else True
+if IN_DEVELOPMENT_RUN:
+    module_logger.info('program run in development mode')
 
 dishwasher = Dishwasher()
 dishwasher.init_gpios()
@@ -39,7 +41,6 @@ running_loop_counter = 0
 current_temperature = 0.0
 
 while dishwasher.in_wash_program:
-
     step_transition_is_triggered = dishwasher.step_transition_triggered
     dishwasher.step_transition_triggered = False
 
@@ -100,5 +101,6 @@ dishwasher.set_buzzer(1)
 module_logger.info('program has finished successfully')
 dishwasher.dispose_gpios()
 
-# shutdown the raspberry pi
-os.system("sudo shutdown -h now")
+if not IN_DEVELOPMENT_RUN:
+    # shutdown the raspberry pi
+    os.system("sudo shutdown -h now")

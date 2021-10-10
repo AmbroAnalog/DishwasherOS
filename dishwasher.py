@@ -49,7 +49,8 @@ class Dishwasher:
             self.module_logger.debug('step transition detected')
             self.step_transition_triggered = True
         elif not self.in_wash_program:
-            self.module_logger.debug('step transition outside of program run detected')
+            # self.module_logger.debug('step transition outside of program run detected')
+            pass
 
     def read_program_sensor_values(self) -> dict[str, bool]:
         """return all GPIO Inputs for program selection detection"""
