@@ -2,6 +2,7 @@ from config import HardwareConfig
 import RPi.GPIO as GPIO
 import time
 import logging
+import subprocess
 
 
 class Dishwasher:
@@ -16,6 +17,7 @@ class Dishwasher:
         self.hwconfig = HardwareConfig()
         self.module_logger = logging.getLogger('DishwasherOS.HAL')
 
+        self.device_identifier = self.get_mac_address()
         self.in_wash_program = False
         self.step_transition_triggered = False
 
@@ -43,6 +45,13 @@ class Dishwasher:
             self.module_logger.warning('GPIO cleanup in active program run called, aborting!')
         else:
             GPIO.cleanup()
+
+    def get_mac_address(self):
+        """the mac address of the device wlan0 is used as a clear identifier of the machine"""
+        response_bytes = subprocess.run(['cat', '/sys/class/net/wlan0/address'], stdout=subprocess.PIPE)
+        string = response_bytes.stdout.decode('utf-8')
+        string = string.replace('\n', '')
+        return string.strip()
 
     def step_transition_detected(self, channel):
         if self.in_wash_program and not self.step_transition_triggered:

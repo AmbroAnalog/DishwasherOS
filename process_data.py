@@ -7,6 +7,7 @@ import os
 import serial
 import logging
 import traceback
+import requests
 from threading import Event, Thread
 from program import WashingProgram
 
@@ -25,6 +26,8 @@ class ProcessDataProvider:
         self.swconfig = program.swconfig
         self.module_logger = logging.getLogger('DishwasherOS.ProcessData')
 
+        self.backend_is_working = True
+
         self.timer = SendProcessDataRepeatedTimer(self.swconfig.data_repeated_timer_interval, self.collect_process_data)
 
     def collect_process_data(self):
@@ -37,12 +40,15 @@ class ProcessDataProvider:
             progress_percent = int((runtime / (time_left + runtime)) * 100)
         process_data = {
             'session_id': self.session_id,
+            'device_identifier': self.program.machine.device_identifier,
             'program_runtime': runtime,
             'program_progress_percent': progress_percent,
             'program_step_operational': self.program.step_operational,
             'program_step_sequence': self.program.step_sequence,
             'program_selected_id': self.program.selected_program,
+            'program_estimated_runtime': self.program.estimated_runtime,
             'program_time_start': self.program.time_start,
+            'program_time_end': self.program.time_end,
             'program_time_left_step': self.program.get_time_left_operationalstep(),
             'program_time_left_sequence': self.program.get_time_left_sequence_step(),
             'program_time_left_program': time_left,
@@ -51,6 +57,7 @@ class ProcessDataProvider:
         }
         # use process_data dict to distribute it to all endpoints
         self.send_process_data_serial_projector(process_data)
+        self.send_process_data_backend(process_data)
 
     def send_process_data_serial_projector(self, process_data):
         if self.program.time_start is None:
@@ -77,6 +84,20 @@ class ProcessDataProvider:
             # or maybe serial.SerialException
             self.module_logger.error(traceback.format_exc())
         serial_communicator.close()
+
+    def send_process_data_backend(self, process_data):
+        base_url = self.swconfig.backend_base_url
+        base_url = base_url.rstrip('/')
+        target_api_url = base_url + '/insert/run_state/'
+        try:
+            req = requests.post(target_api_url, verify=False, json=process_data)
+        except requests.exceptions.RequestException as e:
+            # backend call raised an exception
+            if self.backend_is_working:
+                self.module_logger.exception('backend call raised an exception')
+                self.backend_is_working = False
+        else:
+            self.backend_is_working = True
 
     def write_csv_data_record(self):
         time_start = self.program.time_start

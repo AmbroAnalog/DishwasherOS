@@ -79,8 +79,6 @@ while dishwasher.in_wash_program:
         if program.is_thermo_stop():
             module_logger.debug('in a heating phase to {} °C'.format(program.get_target_temp()))
 
-    # TODO do a post request to web provider in the ProcessDataProvider class
-
     running_loop_counter += 1
     time.sleep(1)
 

@@ -1,3 +1,4 @@
+# modify and rename to settings.yaml
 dishwasher:
   manufacturer: Miele
   model: G 470
@@ -28,7 +29,7 @@ dishwasher:
       sesorTemp: 28-0000058f94d2
   software:
     loopSleepTime: 1
-    backendBaseUrl: 'http://45.156.84.32:5000/'
+    backendBaseUrl: ''
     loggingDirectory: /home/pi/MieleGSmart/Firmware/logs/
     sendProcessDataRepeatedTimerInterval: 1
     programTargetTemps:

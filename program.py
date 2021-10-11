@@ -396,10 +396,10 @@ class WashingProgram:
         self.machine.set_main_relay(True)
         self.machine.in_wash_program = True
         # start timer
-        self.time_start = time.time()
+        self.time_start = int(time.time())
 
     def finish_program(self):
         """end the selected program because step 56 was crossed"""
         self.machine.in_wash_program = False
         self.machine.set_led(False)
-        self.time_end = time.time()
+        self.time_end = int(time.time())
