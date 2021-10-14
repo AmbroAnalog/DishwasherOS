@@ -94,9 +94,12 @@ module_logger.info('wait for 0-position...')
 while not dishwasher.read_input('sensorPinHeizen'):
     time.sleep(0.2)
 
+# wait some time for the dishwasher to run in stop position
+time.sleep(10)
 dishwasher.set_led(True)
 dishwasher.set_buzzer(1)
 module_logger.info('program has finished successfully')
+# TODO Kill the process_data thread before calling dispose_gpios
 dishwasher.dispose_gpios()
 
 if not IN_DEVELOPMENT_RUN:
