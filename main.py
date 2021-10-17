@@ -82,6 +82,7 @@ while dishwasher.in_wash_program:
     running_loop_counter += 1
     time.sleep(1)
 
+data_provider.collecting_process = False
 delta_prediction = int(program.get_current_runtime() - program.estimated_runtime)
 module_logger.info('program end reached after {} minutes'.format(int(program.get_current_runtime() / 60)))
 module_logger.info('difference from the prediction of {} seconds'.format(delta_prediction))
@@ -96,10 +97,10 @@ while not dishwasher.read_input('sensorPinHeizen'):
 
 # wait some time for the dishwasher to run in stop position
 time.sleep(10)
+data_provider.timer.stop()
 dishwasher.set_led(True)
 dishwasher.set_buzzer(1)
 module_logger.info('program has finished successfully')
-# TODO Kill the process_data thread before calling dispose_gpios
 dishwasher.dispose_gpios()
 
 if not IN_DEVELOPMENT_RUN:

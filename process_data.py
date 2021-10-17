@@ -26,12 +26,17 @@ class ProcessDataProvider:
         self.swconfig = program.swconfig
         self.module_logger = logging.getLogger('DishwasherOS.ProcessData')
 
+        self.collecting_process = True
         self.backend_is_working = True
 
         self.timer = SendProcessDataRepeatedTimer(self.swconfig.data_repeated_timer_interval, self.collect_process_data)
 
     def collect_process_data(self):
         """thread function to collect & transfer process data"""
+        if not self.collecting_process:
+            # only send alive call and end function
+            self.send_is_alive_backend()
+            return
         runtime = self.program.get_current_runtime()
         time_left = self.program.get_time_left_program()
         if time_left + runtime == 0:
@@ -90,7 +95,24 @@ class ProcessDataProvider:
         base_url = base_url.rstrip('/')
         target_api_url = base_url + '/insert/run_state/'
         try:
-            req = requests.post(target_api_url, verify=False, json=process_data)
+            requests.post(target_api_url, verify=False, json=process_data)
+        except requests.exceptions.RequestException as e:
+            # backend call raised an exception
+            if self.backend_is_working:
+                self.module_logger.exception('backend call raised an exception')
+                self.backend_is_working = False
+        else:
+            self.backend_is_working = True
+
+    def send_is_alive_backend(self):
+        base_url = self.swconfig.backend_base_url
+        base_url = base_url.rstrip('/')
+        target_api_url = base_url + '/insert/is_alive/'
+        process_data = {
+            'session_id': self.session_id,
+            'device_identifier': self.program.machine.device_identifier}
+        try:
+            requests.post(target_api_url, verify=False, json=process_data)
         except requests.exceptions.RequestException as e:
             # backend call raised an exception
             if self.backend_is_working:
