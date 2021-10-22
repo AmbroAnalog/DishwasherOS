@@ -225,6 +225,10 @@ class WashingProgram:
         new_step_operational = 0
         valve_outlet = self.machine.read_input('sensorPinAblauf')
         if valve_outlet:
+            if 4 <= self.step_operational <= 6:
+                new_step_operational = 3
+            if 10 <= self.step_operational <= 13:
+                new_step_operational = 9
             if 16 <= self.step_operational <= 19:
                 new_step_operational = 15
             if 20 <= self.step_operational <= 23:
