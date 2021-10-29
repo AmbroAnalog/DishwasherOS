@@ -241,6 +241,8 @@ class WashingProgram:
                 new_step_operational = 35
             if 41 <= self.step_operational <= 43:
                 new_step_operational = 44
+            if 46 <= self.step_operational <= 51:
+                new_step_operational = 45
             if 52 <= self.step_operational <= 55:
                 new_step_operational = 56
         if new_step_operational != 0:
