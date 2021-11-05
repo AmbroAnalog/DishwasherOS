@@ -25,24 +25,52 @@ class ProcessDataProvider:
         self.program = program
         self.swconfig = program.swconfig
         self.module_logger = logging.getLogger('DishwasherOS.ProcessData')
+        self.module_logger.info('initialize ProcessDataProvider with [session_id:{}]'.format(self.session_id))
 
-        self.collecting_process = True
+        self.data_report_state = 0
+        """ data_report_state list:
+            0   =>  only report is_alive, before program selection
+            1   =>  report process_data, active process
+            2   =>  report limited process_data, in afterrunning cycle
+            3   =>  only report is_alive, program ended
+        """
+        self.last_process_data_report = False
         self.backend_is_working = True
 
         self.timer = SendProcessDataRepeatedTimer(self.swconfig.data_repeated_timer_interval, self.collect_process_data)
 
     def collect_process_data(self):
         """thread function to collect & transfer process data"""
-        if not self.collecting_process:
-            # only send alive call and end function
+        if self.program.time_start is None or self.data_report_state == 3:
             self.send_is_alive_backend()
             return
+        if self.program.time_start is not None and self.data_report_state == 0:
+            # start report for process_data
+            self.data_report_state = 1
+            self.module_logger.info('start data_report_state 1')
+        if self.program.time_end is not None and self.data_report_state == 1:
+            if not self.last_process_data_report:
+                self.last_process_data_report = True
+                self.module_logger.debug('prepare data_report_state 2')
+            else:
+                # start afterrunning cycle
+                self.data_report_state = 2
+                self.module_logger.info('start data_report_state 2 (afterrunning cycle)')
+        if self.data_report_state == 2:
+            current_time = int(time.time())
+            afterrunning_time_left = self.swconfig.program_afterrunning_cycle - (current_time - self.program.time_end)
+            if afterrunning_time_left < 0:
+                self.data_report_state = 3
+                self.module_logger.info('start data_report_state 3')
+                return
         runtime = self.program.get_current_runtime()
-        time_left = self.program.get_time_left_program()
+        time_left = self.program.get_time_left_program() if self.data_report_state == 1 else 0
         if time_left + runtime == 0:
             progress_percent = 0
-        else:
+        elif self.program.time_end is None:
             progress_percent = int((runtime / (time_left + runtime)) * 100)
+        else:
+            progress_percent = 100
         process_data = {
             'session_id': self.session_id,
             'device_identifier': self.program.machine.device_identifier,
@@ -54,8 +82,8 @@ class ProcessDataProvider:
             'program_estimated_runtime': self.program.estimated_runtime,
             'program_time_start': self.program.time_start,
             'program_time_end': self.program.time_end,
-            'program_time_left_step': self.program.get_time_left_operationalstep(),
-            'program_time_left_sequence': self.program.get_time_left_sequence_step(),
+            'program_time_left_step': self.program.get_time_left_operationalstep() if self.data_report_state != 2 else afterrunning_time_left,
+            'program_time_left_sequence': self.program.get_time_left_sequence_step() if self.data_report_state != 2 else afterrunning_time_left,
             'program_time_left_program': time_left,
             'machine_temperature': self.program.machine.read_temperature(),
             'machine_sensor_values': self.program.machine.read_actuator_sensor_values()
@@ -138,7 +166,7 @@ class ProcessDataProvider:
         with open(record_file_path, 'a') as fd:
             fd.write('{start_time};{program};{duration_est};{duration_real}\n'.format(
                 start_time=self.program.time_start, program=self.program.selected_program,
-                duration_est=self.program.estimated_runtime, duration_real=self.program.get_current_runtime()))
+                duration_est=int(self.program.estimated_runtime), duration_real=self.program.get_current_runtime()))
 
 
 class SendProcessDataRepeatedTimer(object):

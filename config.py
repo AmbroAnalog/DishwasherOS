@@ -67,6 +67,10 @@ class SoftwareConfig(Config):
         return self._swconfig.get('sendProcessDataRepeatedTimerInterval')
 
     @property
+    def program_afterrunning_cycle(self):
+        return self._swconfig.get('afterrunningCycleDuration')
+
+    @property
     def temp_growth_speed(self):
         return self._swconfig.get('programTargetTemps').get('tempGrowthSpeed')
 

@@ -32,6 +32,7 @@ dishwasher:
     backendBaseUrl: ''
     loggingDirectory: /home/pi/MieleGSmart/Firmware/logs/
     sendProcessDataRepeatedTimerInterval: 1
+    afterrunningCycleDuration: 540
     programTargetTemps:
       targetTemp66: 56
       targetTemp56: 47

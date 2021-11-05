@@ -82,7 +82,6 @@ while dishwasher.in_wash_program:
     running_loop_counter += 1
     time.sleep(1)
 
-data_provider.collecting_process = False
 delta_prediction = int(program.get_current_runtime() - program.estimated_runtime)
 module_logger.info('program end reached after {} minutes'.format(int(program.get_current_runtime() / 60)))
 module_logger.info('difference from the prediction of {} seconds'.format(delta_prediction))
