@@ -4,10 +4,13 @@ Modules that take care of the collection and transfer of process-relevant data.
 
 import time
 import os
+from typing import Optional
+
 import serial
 import logging
 import traceback
 import requests
+import json
 from threading import Event, Thread
 from program import WashingProgram
 
@@ -36,8 +39,48 @@ class ProcessDataProvider:
         """
         self.last_process_data_report = False
         self.backend_is_working = True
+        self.electricity_meter_connected = False
+        self.electricity_aenergy_init = 0.0
+        self.read_initial_aenergy()
 
         self.timer = SendProcessDataRepeatedTimer(self.swconfig.data_repeated_timer_interval, self.collect_process_data)
+
+    def read_initial_aenergy(self):
+        """try to read and store the inital value of total aenergy from rpc electricity meter"""
+        electricity_aenergy_init = self.get_electricity_meter_aenergy(True)
+
+        if electricity_aenergy_init is not None:
+            self.electricity_meter_connected = True
+            self.electricity_aenergy_init = float(electricity_aenergy_init)
+            self.module_logger.info('electricity meter connected with %s Wh' % self.electricity_aenergy_init)
+        else:
+            self.module_logger.warning('electricity meter not found!')
+
+    def get_program_aenergy(self) -> int:
+        """return the used energy consumption for running program in Watt-hours"""
+        aenergy_relative = 0.0
+        aenergy_current = self.get_electricity_meter_aenergy()
+        if not self.electricity_meter_connected or aenergy_current is None:
+            return 0
+
+        return int(float(aenergy_current) - self.electricity_aenergy_init)
+
+    def get_electricity_meter_aenergy(self, inital=False) -> Optional[float]:
+        if not inital and not self.electricity_meter_connected:
+            return None
+        electricity_aenergy_init = None
+        base_url = self.swconfig.electricity_meter_ip
+        base_url = base_url.rstrip('/').lstrip('http://')
+        target_api_url = 'http://' + base_url + '/rpc/Switch.GetStatus?id=0'
+        try:
+            response = requests.get(target_api_url, verify=False)
+            if response.ok:
+                data = json.loads(response.content)
+                electricity_aenergy_init = data.get('aenergy').get('total')
+        except requests.exceptions.RequestException as e:
+            pass
+
+        return electricity_aenergy_init
 
     def collect_process_data(self):
         """thread function to collect & transfer process data"""
@@ -86,7 +129,8 @@ class ProcessDataProvider:
             'program_time_left_sequence': self.program.get_time_left_sequence_step() if self.data_report_state != 2 else afterrunning_time_left,
             'program_time_left_program': time_left,
             'machine_temperature': self.program.machine.read_temperature(),
-            'machine_sensor_values': self.program.machine.read_actuator_sensor_values()
+            'machine_sensor_values': self.program.machine.read_actuator_sensor_values(),
+            'machine_aenergy': self.get_program_aenergy()
         }
         # use process_data dict to distribute it to all endpoints
         self.send_process_data_serial_projector(process_data)
@@ -164,9 +208,13 @@ class ProcessDataProvider:
         record_file_path = os.path.join(self.swconfig.logging_directory, 'RunningLog.csv')
         self.module_logger.debug('write {}'.format(record_file_path))
         with open(record_file_path, 'a') as fd:
-            fd.write('{start_time};{program};{duration_est};{duration_real}\n'.format(
-                start_time=self.program.time_start, program=self.program.selected_program,
-                duration_est=int(self.program.estimated_runtime), duration_real=self.program.get_current_runtime()))
+            fd.write('{start_time};{program};{duration_est};{duration_real};{aenergy}\n'.format(
+                start_time=self.program.time_start,
+                program=self.program.selected_program,
+                duration_est=int(self.program.estimated_runtime),
+                duration_real=self.program.get_current_runtime(),
+                aenergy=self.get_program_aenergy()
+            ))
 
 
 class SendProcessDataRepeatedTimer(object):

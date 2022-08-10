@@ -59,6 +59,10 @@ class SoftwareConfig(Config):
         return self._swconfig.get('backendBaseUrl')
 
     @property
+    def electricity_meter_ip(self):
+        return self._swconfig.get('electricityMeterIP')
+
+    @property
     def logging_directory(self):
         return self._swconfig.get('loggingDirectory')
 

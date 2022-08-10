@@ -86,6 +86,7 @@ while dishwasher.in_wash_program:
 delta_prediction = int(program.get_current_runtime() - program.estimated_runtime)
 module_logger.info('program end reached after {} minutes'.format(int(program.get_current_runtime() / 60)))
 module_logger.info('difference from the prediction of {} seconds'.format(delta_prediction))
+module_logger.info('used electricity: {} Wh'.format(data_provider.get_program_aenergy()))
 
 data_provider.write_csv_program_completion_record()
 
@@ -93,6 +94,7 @@ dishwasher.set_buzzer(4)
 module_logger.info('wait for 0-position...')
 # the input pin 'heating' is used as a trigger for the 0-position
 while not dishwasher.read_input('sensorPinHeizen'):
+    dishwasher.flip_debug_led()
     time.sleep(0.2)
 
 # wait some time for the dishwasher to run in stop position
