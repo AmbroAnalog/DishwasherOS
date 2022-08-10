@@ -20,6 +20,7 @@ class Dishwasher:
         self.device_identifier = self.get_mac_address()
         self.in_wash_program = False
         self.step_transition_triggered = False
+        self.debug_led_state = True
 
     def init_gpios(self):
         """initialize all GPIO inputs and outputs"""
@@ -112,9 +113,15 @@ class Dishwasher:
             GPIO.output(pin_name, GPIO.HIGH)
             time.sleep(1)
 
-    def set_led(self, enable: bool):
+    def set_lamp(self, enable: bool):
         mode = GPIO.HIGH if enable is True else GPIO.LOW
-        GPIO.output(self.hwconfig.get_output_pin('relayPinLED'), mode)
+        GPIO.output(self.hwconfig.get_output_pin('relayPinLamp'), mode)
+
+    def flip_debug_led(self):
+        """flip the state of the internal debug LED"""
+        mode = GPIO.HIGH if self.debug_led_state is False else GPIO.LOW
+        self.debug_led_state = not self.debug_led_state
+        GPIO.output(self.hwconfig.get_output_pin('pinDebugLED'), mode)
 
     def set_main_relay(self, enable: bool):
         mode = GPIO.LOW if enable is True else GPIO.HIGH

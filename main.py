@@ -80,6 +80,7 @@ while dishwasher.in_wash_program:
             module_logger.debug('in a heating phase to {} °C'.format(program.get_target_temp()))
 
     running_loop_counter += 1
+    dishwasher.flip_debug_led()
     time.sleep(1)
 
 delta_prediction = int(program.get_current_runtime() - program.estimated_runtime)
@@ -97,7 +98,7 @@ while not dishwasher.read_input('sensorPinHeizen'):
 # wait some time for the dishwasher to run in stop position
 time.sleep(10)
 data_provider.timer.stop()
-dishwasher.set_led(True)
+dishwasher.set_lamp(True)
 dishwasher.set_buzzer(1)
 module_logger.info('program has finished successfully')
 dishwasher.dispose_gpios()

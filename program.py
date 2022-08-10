@@ -397,7 +397,7 @@ class WashingProgram:
 
     def start_program(self):
         """start the selected program and toggle main relay"""
-        self.machine.set_led(True)
+        self.machine.set_lamp(True)
         self.machine.set_buzzer(2)
         self.machine.set_main_relay(True)
         self.machine.in_wash_program = True
@@ -407,5 +407,5 @@ class WashingProgram:
     def finish_program(self):
         """end the selected program because step 56 was crossed"""
         self.machine.in_wash_program = False
-        self.machine.set_led(False)
+        self.machine.set_lamp(False)
         self.time_end = int(time.time())
