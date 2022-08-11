@@ -4,7 +4,6 @@ Modules that take care of the collection and transfer of process-relevant data.
 
 import time
 import os
-from typing import Optional
 
 import serial
 import logging
@@ -47,7 +46,7 @@ class ProcessDataProvider:
 
     def read_initial_aenergy(self):
         """try to read and store the inital value of total aenergy from rpc electricity meter"""
-        electricity_aenergy_init = self.get_electricity_meter_aenergy(True)
+        electricity_aenergy_init = self.get_electricity_meter_metrics(True)['aenergy']
 
         if electricity_aenergy_init is not None:
             self.electricity_meter_connected = True
@@ -56,19 +55,18 @@ class ProcessDataProvider:
         else:
             self.module_logger.warning('electricity meter not found!')
 
-    def get_program_aenergy(self) -> int:
+    def get_program_aenergy(self, aenergy_current) -> int:
         """return the used energy consumption for running program in Watt-hours"""
         aenergy_relative = 0.0
-        aenergy_current = self.get_electricity_meter_aenergy()
         if not self.electricity_meter_connected or aenergy_current is None:
             return 0
 
         return int(float(aenergy_current) - self.electricity_aenergy_init)
 
-    def get_electricity_meter_aenergy(self, inital=False) -> Optional[float]:
+    def get_electricity_meter_metrics(self, inital=False) -> dict:
+        metrics = {'aenergy': None, 'apower': None}
         if not inital and not self.electricity_meter_connected:
-            return None
-        electricity_aenergy_init = None
+            return metrics
         base_url = self.swconfig.electricity_meter_ip
         base_url = base_url.rstrip('/').lstrip('http://')
         target_api_url = 'http://' + base_url + '/rpc/Switch.GetStatus?id=0'
@@ -76,11 +74,11 @@ class ProcessDataProvider:
             response = requests.get(target_api_url, verify=False)
             if response.ok:
                 data = json.loads(response.content)
-                electricity_aenergy_init = data.get('aenergy').get('total')
+                metrics['aenergy'] = data.get('aenergy').get('total')
+                metrics['apower'] = int(data.get('apower')) if data.get('apower') is not None else None
         except requests.exceptions.RequestException as e:
             pass
-
-        return electricity_aenergy_init
+        return metrics
 
     def collect_process_data(self):
         """thread function to collect & transfer process data"""
@@ -114,6 +112,7 @@ class ProcessDataProvider:
             progress_percent = int((runtime / (time_left + runtime)) * 100)
         else:
             progress_percent = 100
+        electricity_metrics = self.get_electricity_meter_metrics()
         process_data = {
             'session_id': self.session_id,
             'device_identifier': self.program.machine.device_identifier,
@@ -130,7 +129,8 @@ class ProcessDataProvider:
             'program_time_left_program': time_left,
             'machine_temperature': self.program.machine.read_temperature(),
             'machine_sensor_values': self.program.machine.read_actuator_sensor_values(),
-            'machine_aenergy': self.get_program_aenergy()
+            'machine_aenergy': self.get_program_aenergy(electricity_metrics['aenergy']),
+            'machine_apower': electricity_metrics['apower']
         }
         # use process_data dict to distribute it to all endpoints
         self.send_process_data_serial_projector(process_data)
