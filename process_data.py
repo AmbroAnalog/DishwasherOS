@@ -213,7 +213,7 @@ class ProcessDataProvider:
                 program=self.program.selected_program,
                 duration_est=int(self.program.estimated_runtime),
                 duration_real=self.program.get_current_runtime(),
-                aenergy=self.get_program_aenergy()
+                aenergy=self.get_program_aenergy(self.get_electricity_meter_metrics()['aenergy'])
             ))
 
 

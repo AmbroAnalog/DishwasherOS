@@ -123,6 +123,14 @@ class Dishwasher:
         self.debug_led_state = not self.debug_led_state
         GPIO.output(self.hwconfig.get_output_pin('pinDebugLED'), mode)
 
+    def reset_projector(self):
+        """workaround for freezing projector microcontroller"""
+        self.module_logger.info('reset projector microcontroller')
+        GPIO.output(self.hwconfig.get_output_pin('pinResetProjector'), GPIO.LOW)
+        time.sleep(0.15)
+        GPIO.output(self.hwconfig.get_output_pin('pinResetProjector'), GPIO.HIGH)
+
+
     def set_main_relay(self, enable: bool):
         mode = GPIO.LOW if enable is True else GPIO.HIGH
         GPIO.output(self.hwconfig.get_output_pin('relayPinMain'), mode)

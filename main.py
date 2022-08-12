@@ -79,6 +79,10 @@ while dishwasher.in_wash_program:
         if program.is_thermo_stop():
             module_logger.debug('in a heating phase to {} °C'.format(program.get_target_temp()))
 
+        # workaround for freezing projector microcontroller # TODO fix projector firmware :/
+        if program.step_operational in [9, 15, 25, 35, 50]:
+            dishwasher.reset_projector()
+
     running_loop_counter += 1
     dishwasher.flip_debug_led()
     time.sleep(1)

@@ -5,13 +5,15 @@ dishwasher:
   hardware:
     outputs:
       relayPinMain: 17
-      relayPinLED: 27
+      relayPinLamp: 27
       relayPinP9: 22
       relayPinP7: 10
       relayPinP6: 9
       relayPinP4: 11
       relayPinMotor: 19
       relayPinSummer: 26
+      pinDebugLED: 3
+      pinResetProjector: 2
     inputs:
       sensorPinP4: 23
       sensorPinP6: 24
@@ -30,6 +32,7 @@ dishwasher:
   software:
     loopSleepTime: 1
     backendBaseUrl: ''
+    electricityMeterIP: '192.168.0.12'
     loggingDirectory: /home/pi/MieleGSmart/Firmware/logs/
     sendProcessDataRepeatedTimerInterval: 1
     afterrunningCycleDuration: 540
