@@ -130,7 +130,6 @@ class Dishwasher:
         time.sleep(0.15)
         GPIO.output(self.hwconfig.get_output_pin('pinResetProjector'), GPIO.HIGH)
 
-
     def set_main_relay(self, enable: bool):
         mode = GPIO.LOW if enable is True else GPIO.HIGH
         GPIO.output(self.hwconfig.get_output_pin('relayPinMain'), mode)

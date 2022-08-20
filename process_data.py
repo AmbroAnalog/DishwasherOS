@@ -55,12 +55,13 @@ class ProcessDataProvider:
         else:
             self.module_logger.warning('electricity meter not found!')
 
-    def get_program_aenergy(self, aenergy_current) -> int:
+    def get_program_aenergy(self, aenergy_current=-1) -> int:
         """return the used energy consumption for running program in Watt-hours"""
         aenergy_relative = 0.0
+        if aenergy_current == -1:
+            aenergy_current = self.get_electricity_meter_metrics()['aenergy']
         if not self.electricity_meter_connected or aenergy_current is None:
             return 0
-
         return int(float(aenergy_current) - self.electricity_aenergy_init)
 
     def get_electricity_meter_metrics(self, inital=False) -> dict:
@@ -78,6 +79,7 @@ class ProcessDataProvider:
                 metrics['apower'] = int(data.get('apower')) if data.get('apower') is not None else None
         except requests.exceptions.RequestException as e:
             pass
+        # self.module_logger.debug('electricity_meter_metrics request ' + json.dumps(metrics))
         return metrics
 
     def collect_process_data(self):
@@ -213,7 +215,7 @@ class ProcessDataProvider:
                 program=self.program.selected_program,
                 duration_est=int(self.program.estimated_runtime),
                 duration_real=self.program.get_current_runtime(),
-                aenergy=self.get_program_aenergy(self.get_electricity_meter_metrics()['aenergy'])
+                aenergy=self.get_program_aenergy()
             ))
 
 

@@ -74,7 +74,7 @@ while dishwasher.in_wash_program:
 
     if program.step_operational != old_step_operational:
         # the program has gone one step forward
-        module_logger.debug('begin new step {} with runtime {}s'.format(program.step_operational,
+        module_logger.info('begin new step {} with runtime {}s'.format(program.step_operational,
                                                                         program.get_time_left_operationalstep()))
         if program.is_thermo_stop():
             module_logger.debug('in a heating phase to {} °C'.format(program.get_target_temp()))
