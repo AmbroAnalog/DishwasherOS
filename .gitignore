@@ -1,6 +1,6 @@
 __pycache__/
 .directory/
 .idea/
-runlog.log
+runlog*
 OLD_MieleGSmartFirmware.py
 settings.yaml
