@@ -46,4 +46,4 @@ echo "" >> runlog.log
 echo "starting python script..." >> runlog.log
 
 # execute python DishwasherOS
-/usr/local/bin/python3.9 main.py
+/usr/local/bin/python3.9 main.py &>> /home/pi/DishwasherOS/runlog_complete.log
