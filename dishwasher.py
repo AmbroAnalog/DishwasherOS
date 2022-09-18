@@ -3,6 +3,7 @@ import RPi.GPIO as GPIO
 import time
 import logging
 import subprocess
+import sys
 
 
 class Dishwasher:
@@ -90,12 +91,18 @@ class Dishwasher:
 
     def read_temperature(self) -> float:
         """read & convert the temperature sensor from bus"""
-        file = open('/sys/bus/w1/devices/{}/w1_slave'.format(self.hwconfig.get_address('sesorTemp')))
-        file_content = file.read()
-        file.close()
-        # read and convert temperature value
-        string_value = file_content.split("\n")[1].split(" ")[9]
-        return round(float(string_value[2:]) / 1000, 1)
+        w1_device_file = "/sys/bus/w1/devices/{}/w1_slave".format(self.hwconfig.get_address('sesorTemp'))
+        try:
+            file = open(w1_device_file)
+            file_content = file.read()
+            file.close()
+            # read and convert temperature value
+            string_value = file_content.split("\n")[1].split(" ")[9]
+            temperature = round(float(string_value[2:]) / 1000, 1)
+        except OSError:
+            self.module_logger.error("unable to read temperature due to an OSError (file: {})".format(w1_device_file))
+            temperature = 0.0
+        return temperature
 
     def set_all_relays(self, set_state: bool):
         """set all GPIO program relay outputs to set_state"""
